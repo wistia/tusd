@@ -274,14 +274,16 @@ func (store S3Store) WriteChunk(id string, offset int64, src io.Reader) (int64, 
 		src = io.MultiReader(incompletePartFile, src)
 	}
 
+	var wg sync.WaitGroup
+	errChan := make(chan error)
+
 	for {
 		// Create a temporary file to store the part in it
 		file, err := ioutil.TempFile("", "tusd-s3-tmp-")
 		if err != nil {
+			finishWriteChunk(&wg, errChan, file)
 			return bytesUploaded, err
 		}
-		defer os.Remove(file.Name())
-		defer file.Close()
 
 		limitedReader := io.LimitReader(src, optimalPartSize)
 		n, err := io.Copy(file, limitedReader)
@@ -297,11 +299,12 @@ func (store S3Store) WriteChunk(id string, offset int64, src io.Reader) (int64, 
 
 		// io.Copy does not return io.EOF, so we not have to handle it differently.
 		if err != nil {
+			finishWriteChunk(&wg, errChan, file)
 			return bytesUploaded, err
 		}
 		// If io.Copy is finished reading, it will always return (0, nil).
 		if n == 0 {
-			return (bytesUploaded - incompletePartSize), nil
+			return (bytesUploaded - incompletePartSize), finishWriteChunk(&wg, errChan, file)
 		}
 
 		// Seek to the beginning of the file
@@ -309,29 +312,60 @@ func (store S3Store) WriteChunk(id string, offset int64, src io.Reader) (int64, 
 
 		isFinalChunk := !info.SizeIsDeferred && (size == (offset-incompletePartSize)+n)
 		if n >= store.MinPartSize || isFinalChunk {
-			_, err = store.Service.UploadPart(&s3.UploadPartInput{
-				Bucket:     aws.String(store.Bucket),
-				Key:        store.keyWithPrefix(uploadId),
-				UploadId:   aws.String(multipartId),
-				PartNumber: aws.Int64(nextPartNum),
-				Body:       file,
-			})
-			if err != nil {
-				return bytesUploaded, err
-			}
+			wg.Add(1)
+			go func(file *os.File, partNum int64) {
+				defer func() {
+					wg.Done()
+					os.Remove(file.Name())
+					file.Close()
+				}()
+
+				file.Seek(0, 0)
+
+				_, err := store.Service.UploadPart(&s3.UploadPartInput{
+					Bucket:     aws.String(store.Bucket),
+					Key:        store.keyWithPrefix(uploadId),
+					UploadId:   aws.String(multipartId),
+					PartNumber: aws.Int64(partNum),
+					Body:       file,
+				})
+
+				if err != nil {
+					fmt.Printf("Error uploading part: %v\n", err.Error())
+					errChan <- err
+					return
+				}
+			}(file, nextPartNum)
 		} else {
 			if err := store.putIncompletePartForUpload(uploadId, file); err != nil {
-				return bytesUploaded, err
+				return bytesUploaded, finishWriteChunk(&wg, errChan, file)
 			}
 
 			bytesUploaded += n
 
-			return (bytesUploaded - incompletePartSize), nil
+			return (bytesUploaded - incompletePartSize), finishWriteChunk(&wg, errChan, file)
 		}
 
 		offset += n
 		bytesUploaded += n
 		nextPartNum += 1
+	}
+}
+
+func finishWriteChunk(wg *sync.WaitGroup, errChan chan error, lastFile *os.File) error {
+	defer func() {
+		lastFile.Close()
+		os.Remove(lastFile.Name())
+		close(errChan)
+	}()
+
+	wg.Wait()
+
+	select {
+	case e := <-errChan:
+		return e
+	default:
+		return nil
 	}
 }
 
