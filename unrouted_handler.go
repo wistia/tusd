@@ -1,6 +1,7 @@
 package tusd
 
 import (
+	"bytes"
 	"encoding/base64"
 	"errors"
 	"io"
@@ -529,23 +530,27 @@ func (handler *UnroutedHandler) writeChunk(id string, info FileInfo, w http.Resp
 	handler.log("ChunkWriteStart", "id", id, "maxSize", i64toa(maxSize), "offset", i64toa(offset))
 
 	var bytesWritten int64
-	// Prevent a nil pointer dereference when accessing the body which may not be
-	// available in the case of a malicious request.
+	var reader io.Reader
+
 	if r.Body != nil {
 		// Limit the data read from the request's body to the allowed maximum
-		reader := io.LimitReader(r.Body, maxSize)
+		reader = io.LimitReader(r.Body, maxSize)
+	} else {
+		// Prevent a nil pointer dereference when accessing the body which may not be
+		// available in the case of a malicious request.
+		reader = bytes.NewReader(nil)
+	}
 
-		if handler.config.NotifyUploadProgress {
-			var stop chan<- struct{}
-			reader, stop = handler.sendProgressMessages(info, reader)
-			defer close(stop)
-		}
+	if handler.config.NotifyUploadProgress {
+		var stop chan<- struct{}
+		reader, stop = handler.sendProgressMessages(info, reader)
+		defer close(stop)
+	}
 
-		var err error
-		bytesWritten, err = handler.composer.Core.WriteChunk(id, offset, reader)
-		if err != nil {
-			return err
-		}
+	var err error
+	bytesWritten, err = handler.composer.Core.WriteChunk(id, offset, reader)
+	if err != nil {
+		return err
 	}
 
 	handler.log("ChunkWriteComplete", "id", id, "bytesWritten", i64toa(bytesWritten))
