@@ -243,8 +243,8 @@ func TestGetInfoWithIncompletePart(t *testing.T) {
 			Bucket: aws.String("bucket"),
 			Key:    aws.String("uploadId.part"),
 		}).Return(&s3.GetObjectOutput{
-			ContentLength: 	aws.Int64(10),
-			Body: 			ioutil.NopCloser(bytes.NewReader([]byte("0123456789"))),
+			ContentLength: aws.Int64(10),
+			Body:          ioutil.NopCloser(bytes.NewReader([]byte("0123456789"))),
 		}, nil),
 	)
 
@@ -730,8 +730,8 @@ func TestWriteChunkPrependsIncompletePart(t *testing.T) {
 			Bucket: aws.String("bucket"),
 			Key:    aws.String("uploadId.part"),
 		}).Return(&s3.GetObjectOutput{
-			ContentLength: 	aws.Int64(3),
-			Body:			ioutil.NopCloser(bytes.NewReader([]byte("123"))),
+			ContentLength: aws.Int64(3),
+			Body:          ioutil.NopCloser(bytes.NewReader([]byte("123"))),
 		}, nil),
 		s3obj.EXPECT().ListParts(&s3.ListPartsInput{
 			Bucket:           aws.String("bucket"),
