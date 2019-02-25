@@ -691,9 +691,10 @@ func (store S3Store) getIncompletePartForUpload(uploadId string) (*s3.GetObjectO
 
 func (store S3Store) putIncompletePartForUpload(uploadId string, r io.ReadSeeker) error {
 	_, err := store.Service.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(store.Bucket),
-		Key:    store.keyWithPrefix(uploadId + ".part"),
-		Body:   r,
+		Bucket:  aws.String(store.Bucket),
+		Key:     store.keyWithPrefix(uploadId + ".part"),
+		Body:    r,
+		Tagging: aws.String(store.TransientObjectTags),
 	})
 	return err
 }
