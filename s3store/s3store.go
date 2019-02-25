@@ -131,6 +131,11 @@ type S3Store struct {
 	// ApplyMetadata specifies whether the tus metadata should be applied to the
 	// final S3 object
 	ApplyMetadata bool
+	// TransientObjectTags is a comma-separated list of tags that is applied to S3
+	// metadata objects that can be safely purged after an upload is complete. This
+	// mechanism can be used to create an expiration policy that removes such
+	// objects after a period of time.
+	TransientObjectTags string
 }
 
 type S3API interface {
