@@ -620,10 +620,11 @@ func (store S3Store) DeclareLength(id string, length int64) error {
 }
 
 func convertParts(parts []*s3.Part) []tusd.Part {
+	var convertedParts []tusd.Part
 	for _, part := range parts {
-		parts = append(parts, tusd.Part(part))
+		convertedParts = append(convertedParts, tusd.Part(part))
 	}
-	return parts
+	return convertedParts
 }
 
 func (store S3Store) listAllParts(id string) (parts []*s3.Part, err error) {
