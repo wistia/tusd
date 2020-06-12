@@ -622,7 +622,13 @@ func (store S3Store) DeclareLength(id string, length int64) error {
 func convertParts(parts []*s3.Part) []tusd.Part {
 	var convertedParts []tusd.Part
 	for _, part := range parts {
-		convertedParts = append(convertedParts, tusd.Part(part))
+		convertedPart := tusd.Part {
+			Etag: part.Etag,
+			LastModified: part.LastModified,
+			PartNumber: part.PartNumber,
+			Size: part.Size,
+		}
+		convertedParts = append(convertedPart, tusd.Part(part))
 	}
 	return convertedParts
 }
