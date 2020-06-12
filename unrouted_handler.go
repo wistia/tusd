@@ -455,12 +455,29 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	parts := info.Parts
+	loggableParts := ""
+	for _, part := range parts {
+		loggableParts += fmt.Sprintf("%v", part)
+	}
+	handler.log("ErrMismatchOffset",
+		"id", id,
+		"size", strconv.FormatInt(info.Size, 10),
+		"size is deferred?", strconv.FormatBool(info.SizeIsDeferred),
+		"header offset", strconv.FormatInt(offset, 10),
+		"s3 offset", strconv.FormatInt(info.Offset, 10),
+		"metadata", fmt.Sprintf("%v", info.MetaData),
+		"is partial?", strconv.FormatBool(info.IsPartial),
+		"is final?", strconv.FormatBool(info.IsFinal),
+		"partial uploads", strings.Join(info.PartialUploads[:], ","),
+		"upload parts", loggableParts)
+
 	if offset != info.Offset {
-		parts := info.Parts
-		loggableParts := ""
-		for _, part := range parts {
-			loggableParts += fmt.Sprintf("%v", part)
-		}
+		//parts := info.Parts
+		//loggableParts := ""
+		//for _, part := range parts {
+		//	loggableParts += fmt.Sprintf("%v", part)
+		//}
 		handler.log("ErrMismatchOffset",
 			"id", id,
 			"size", strconv.FormatInt(info.Size, 10),
