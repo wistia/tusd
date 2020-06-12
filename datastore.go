@@ -2,6 +2,7 @@ package tusd
 
 import (
 	"io"
+	"strconv"
 	"time"
 )
 
@@ -45,6 +46,26 @@ type Part struct {
 	// Size in bytes of the uploaded part data.
 	Size *int64 `type:"integer"`
 	// contains filtered or unexported fields
+}
+
+func (p Part) String() string {
+	etag := ""
+	lastModified := ""
+	partNumber := ""
+	size := ""
+	if p.ETag != nil {
+		etag = *p.ETag
+	}
+	if p.LastModified != nil {
+		lastModified = p.LastModified.String()
+	}
+	if p.PartNumber != nil {
+		partNumber = strconv.FormatInt(*p.PartNumber, 10)
+	}
+	if p.Size != nil {
+		size = strconv.FormatInt(*p.Size, 10)
+	}
+	return "etag: " + etag + ",lastModified: " + lastModified + ",partNumber: " + partNumber + ",size: " + size
 }
 
 type DataStore interface {

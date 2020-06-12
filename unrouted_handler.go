@@ -458,7 +458,7 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	parts := info.Parts
 	loggableParts := ""
 	for _, part := range parts {
-		loggableParts += fmt.Sprintf("%v", part)
+		loggableParts += part.String() + ":"
 	}
 	handler.log("ErrMismatchOffset",
 		"id", id,
