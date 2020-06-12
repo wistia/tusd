@@ -2,6 +2,7 @@ package tusd
 
 import (
 	"io"
+	"time"
 )
 
 type MetaData map[string]string
@@ -25,6 +26,25 @@ type FileInfo struct {
 	// ordered slice containing the ids of the uploads of which the final upload
 	// will consist after concatenation.
 	PartialUploads []string
+	//Added for diagnosing annoying mismatch offsets for wistia uploads
+	Parts []*Part
+}
+
+type Part struct {
+
+	// Entity tag returned when the part was uploaded.
+	ETag *string `type:"string"`
+
+	// Date and time at which the part was uploaded.
+	LastModified *time.Time `type:"timestamp"`
+
+	// Part number identifying the part. This is a positive integer between 1 and
+	// 10,000.
+	PartNumber *int64 `type:"integer"`
+
+	// Size in bytes of the uploaded part data.
+	Size *int64 `type:"integer"`
+	// contains filtered or unexported fields
 }
 
 type DataStore interface {

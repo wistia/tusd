@@ -415,6 +415,8 @@ func (store S3Store) GetInfo(id string) (info tusd.FileInfo, err error) {
 		offset += *part.Size
 	}
 
+	info.Parts = convertParts(parts)
+
 	incompletePartObject, err := store.getIncompletePartForUpload(uploadId)
 	if err != nil {
 		return info, err
@@ -615,6 +617,13 @@ func (store S3Store) DeclareLength(id string, length int64) error {
 	info.SizeIsDeferred = false
 
 	return store.writeInfo(uploadId, info)
+}
+
+func convertParts(parts []*s3.Part) []tusd.Part {
+	for _, part := range parts {
+		parts = append(parts, tusd.Part(part))
+	}
+	return parts
 }
 
 func (store S3Store) listAllParts(id string) (parts []*s3.Part, err error) {
