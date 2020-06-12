@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -455,6 +456,18 @@ func (handler *UnroutedHandler) PatchFile(w http.ResponseWriter, r *http.Request
 	}
 
 	if offset != info.Offset {
+		var partials []string
+		for _, p := range info.PartialUploads {
+
+		}
+		handler.log("ErrMismatchOffset", "id", id,
+			"size", strconv.FormatInt(info.Size, 10),
+			"size is deferred?", strconv.FormatBool(info.SizeIsDeferred),
+			"offset", strconv.FormatInt(info.Offset, 10),
+			"metadata", fmt.Sprintf("%v", info.MetaData),
+			"is partial?", strconv.FormatBool(info.IsPartial),
+			"is final?", strconv.FormatBool(info.IsFinal),
+			"partial uploads", 
 		handler.sendError(w, r, ErrMismatchOffset)
 		return
 	}
