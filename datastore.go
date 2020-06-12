@@ -27,7 +27,7 @@ type FileInfo struct {
 	// will consist after concatenation.
 	PartialUploads []string
 	//Added for diagnosing annoying mismatch offsets for wistia uploads
-	Parts []*Part
+	Parts []Part
 }
 
 type Part struct {

@@ -623,12 +623,12 @@ func convertParts(parts []*s3.Part) []tusd.Part {
 	var convertedParts []tusd.Part
 	for _, part := range parts {
 		convertedPart := tusd.Part {
-			Etag: part.Etag,
+			ETag: part.Etag,
 			LastModified: part.LastModified,
 			PartNumber: part.PartNumber,
 			Size: part.Size,
 		}
-		convertedParts = append(convertedPart, tusd.Part(part))
+		convertedParts = append(convertedParts, convertedPart)
 	}
 	return convertedParts
 }
