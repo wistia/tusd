@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math"
@@ -630,8 +631,11 @@ func (handler *UnroutedHandler) writeChunk(ctx context.Context, upload Upload, i
 		go func() {
 			// Interrupt the Read() call from the request body
 			<-uploadCtx.Done()
+			fmt.Printf("uploadctx done")
 			terminateUpload = true
+			fmt.Printf("closing request body")
 			r.Body.Close()
+			fmt.Printf("done closing request body")
 		}()
 
 		if handler.config.NotifyUploadProgress {
@@ -640,7 +644,10 @@ func (handler *UnroutedHandler) writeChunk(ctx context.Context, upload Upload, i
 		}
 
 		bytesWritten, err = upload.WriteChunk(ctx, offset, reader)
+		fmt.Printf("terminateUpload = %v", terminateUpload)
+		fmt.Printf("composer uses terminator: %v", handler.composer.UsesTerminater)
 		if terminateUpload && handler.composer.UsesTerminater {
+			fmt.Printf("terminating upload")
 			if terminateErr := handler.terminateUpload(ctx, upload, info, r); terminateErr != nil {
 				// We only log this error and not show it to the user since this
 				// termination error is not relevant to the uploading client
