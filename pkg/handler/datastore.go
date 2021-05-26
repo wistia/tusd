@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"io"
 )
 
@@ -42,6 +43,7 @@ type FileInfo struct {
 // interrupting and the upload is terminated (if supported by the data store),
 // so the upload cannot be resumed anymore.
 func (f FileInfo) StopUpload() {
+	fmt.Printf("StopUpload called with file info: %#v", f)
 	if f.stopUpload != nil {
 		f.stopUpload()
 	}
